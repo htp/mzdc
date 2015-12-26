@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+#
+# Summary: Prepare the infotainment system for modification.
+#
+# Usage: mzdc bootstrap
+# 
+# This command prepares the infotainment system for modification by copying
+# your public key to it (guiding you through the key's creation if necessary) 
+# and by remounting its root volume as writable.
+
+source "$(dirname "${0}")/mzdc"
+[ -f "${HOME}/.mzdcrc" ] && source "${HOME}/.mzdcrc"
+
+generate_keys_if_necessary() {
+    if [ ! -f "${HOME}/.ssh/id_rsa.pub" ]; then
+        ssh-keygen -t rsa -b 4096
+    fi
+}
+
+copy_public_key() {
+    local ip_address="${MZDC_IP_ADDRESS:-192.168.42.1}"
+    local public_key="$(cat "${HOME}/.ssh/id_rsa.pub")"
+    local command="mkdir -p \"\${HOME}/.ssh\" && echo \"${public_key}\" > \"\${HOME}/.ssh/authorized_keys\""
+
+    ssh "root@${ip_address}" "${command}"
+}
+
+make_volume_writable() {
+    local ip_address="${MZDC_IP_ADDRESS:-192.168.42.1}"
+    local command="mount -o rw,remount /"
+
+    ssh "root@${ip_address}" "${command}"
+}
+
+main() {
+    generate_keys_if_necessary
+    copy_public_key
+    make_volume_writable
+}
+
+main "$@"

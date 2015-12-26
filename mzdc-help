@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+#
+# Summary: List all commands or show documentation for a specific command.
+#
+# Usage: mzdc help [<command>]
+# 
+# When called without an argument, this command lists all available commands.
+# 
+# When called with an argument, this command shows the documentation for that
+# command.
+
+source "$(dirname "${0}")/mzdc"
+[ -f "${HOME}/.mzdcrc" ] && source "${HOME}/.mzdcrc"
+
+print_general_documentation() {
+    local script_paths=($(find "$(mzdc_directory)" -name "mzdc-*"))
+    local max_command_length=0
+    
+    for script_path in ${script_paths[@]}; do
+        local basename="$(basename "${script_path}")"
+        local command="${basename#mzdc-}"
+        local command_length=${#command}
+
+        if [ ${command_length} -gt ${max_command_length} ]; then
+            max_command_length=${command_length}
+        fi
+    done
+    
+    local summaries=""
+    local program="/^# Summary: / {
+        print substr(\$0, 12)
+    }"
+    
+    for script_path in ${script_paths[@]}; do
+        local basename="$(basename "${script_path}")"
+        local command="${basename#mzdc-}"
+        local summary=$(awk "${program}" "${script_path}")
+        
+        summaries+="$(printf "    %-$((${max_command_length} + 4))s%s" "${command}" "${summary}")\n"
+    done
+    
+    cat <<-EOS
+	Usage: mzdc <command> [<arguments>]
+	
+	Available commands are:
+	
+	$(echo -e ${summaries})
+	
+	See \`mzdc help <command>\` for information about a specific command.
+	EOS
+}
+
+print_command_documentation() {
+    local command="${1:-help}"
+    local script_path="$(script_path "${command}")"
+    
+    if [ -x "${script_path}" ]; then
+        local program="/^# Usage: / {
+            print substr(\$0, 3)
+            
+            while ((getline line) > 0) {
+                if (line ~ /^# /) {
+                    print substr(line, 3)
+                }
+                else {
+                    exit
+                }
+            }
+        }"
+        
+        awk "${program}" "${script_path}"
+    else
+        abort "'${command}' isn't a command I recognize. See \`mzdc help\` for a list of commands."
+    fi
+}
+
+main() {
+    if [ $# -gt 0 ]; then
+        print_command_documentation "${1}"
+    else
+        print_general_documentation
+    fi
+}
+
+main "$@"

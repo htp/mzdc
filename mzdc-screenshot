@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+#
+# Summary: Save a screenshot of the infotainment system to your desktop.
+#
+# Usage: mzdc screenshot
+# 
+# This command takes a screenshot of whatever is currently displayed on the
+# infotainment system's screen and copies it to your desktop.
+
+source "$(dirname "${0}")/mzdc"
+[ -f "${HOME}/.mzdcrc" ] && source "${HOME}/.mzdcrc"
+
+take_screenshot() {
+    local ip_address="${MZDC_IP_ADDRESS:-192.168.42.1}"
+    local command="source /etc/profile && screenshot"
+
+    ssh "root@${ip_address}" "${command}"
+}
+
+copy_screenshot() {
+    local ip_address="${MZDC_IP_ADDRESS:-192.168.42.1}"
+    local filename="$(date "+Mazda Connect Screen Shot %Y-%m-%d at %H.%M.%S.png")"
+
+    scp "root@${ip_address}:wayland-screenshot.png" "${HOME}/Desktop/${filename}.png"
+}
+
+main() {
+  take_screenshot
+  copy_screenshot
+}
+
+main "$@"

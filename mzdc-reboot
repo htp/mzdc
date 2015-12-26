@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+#
+# Summary: Reboot the infotainment system.
+#
+# Usage: mzdc reboot
+# 
+# This command reboots the CMU (connectivity master unit).
+
+source "$(dirname "${0}")/mzdc"
+[ -f "${HOME}/.mzdcrc" ] && source "${HOME}/.mzdcrc"
+
+reboot_cmu() {
+    local ip_address="${MZDC_IP_ADDRESS:-192.168.42.1}"
+    local command="reboot"
+
+    ssh "root@${ip_address}" "${command}"
+}
+
+main() {
+    reboot_cmu
+}
+
+main "$@"

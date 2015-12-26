@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+set -o errexit -o nounset -o pipefail
+IFS=$'\n\t'
+
+abort() {
+    local message="${1}"
+    
+    echo -e "mzdc: ${message}" >&2
+    exit 1
+}
+
+mzdc_directory() {
+    local script_path="$(resolve_link "${BASH_SOURCE[0]}")"
+    
+    echo "$(cd "$(dirname "${script_path}")" && pwd)"
+}
+
+resolve_link() {
+    local path="${1}"
+    
+    while [ -L "${path}" ]; do
+        path="$(readlink "${path}")"
+    done
+    
+    echo "${path}"
+}
+
+script_path() {
+    local command="${1}"
+    local script_path="$(mzdc_directory)/mzdc-${command}"
+    
+    if [ -x "${script_path}" ]; then
+        echo "${script_path}"
+    else
+        echo ""
+    fi
+}
+
+if [ "$(resolve_link "${BASH_SOURCE[0]}")" = "$(resolve_link "${0}")" ]; then
+    main() {
+        local command="${1:-help}"
+        local script_path="$(script_path "${command}")"
+        
+        if [ -x "${script_path}" ]; then
+            if [ $# -gt 0 ]; then
+                shift
+            fi
+            
+            exec "${script_path}" "$@"
+        else
+            abort "'${command}' isn't a command I recognize. See \`mzdc help\` for a list of commands."
+        fi
+    }
+    
+    main "$@"
+fi

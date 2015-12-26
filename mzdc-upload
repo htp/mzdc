@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+#
+# Summary: Upload the specified file(s) to the infotainment system.
+#
+# Usage: mzdc upload <path> [<path> ...]
+# 
+# This command uploads the specified files or directories to /tmp/root
+# on the infotainment system.
+
+source "$(dirname "${0}")/mzdc"
+[ -f "${HOME}/.mzdcrc" ] && source "${HOME}/.mzdcrc"
+
+upload_paths() {
+    local ip_address="${MZDC_IP_ADDRESS:-192.168.42.1}"
+    
+    for path in "$@"; do
+        scp -r "${path}" "root@${ip_address}:"
+    done
+}
+
+main() {
+    upload_paths "$@"
+}
+
+main "$@"

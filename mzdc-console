@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+#
+# Summary: Open an SSH prompt to the infotainment system.
+#
+# Usage: mzdc console
+# 
+# This command simply opens an SSH session to the infotainment system.
+
+source "$(dirname "${0}")/mzdc"
+[ -f "${HOME}/.mzdcrc" ] && source "${HOME}/.mzdcrc"
+
+open_console() {
+    local ip_address="${MZDC_IP_ADDRESS:-192.168.42.1}"
+
+    ssh "root@${ip_address}"
+}
+
+main() {
+    open_console
+}
+
+main "$@"
